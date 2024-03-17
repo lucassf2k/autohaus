@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ImplDatabaseRemote implements DatabaseRemote {
+    public final static int PORT = 20005;
     private final Map<String, Car> DB = new HashMap<>();
 
 
