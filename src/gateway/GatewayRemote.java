@@ -31,4 +31,5 @@ public interface GatewayRemote extends Remote {
         String yearManufacture,
         Double price
     ) throws RemoteException;
+    Car buyCar(String renavam, double price) throws RemoteException;
 }

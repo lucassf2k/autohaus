@@ -74,4 +74,12 @@ public class ImplGatewayRemote implements GatewayRemote {
         final var updatedCar = new Car(revavam, name, category, yearManufacture, price);
         return carDatabaseStub.update(renavam, updatedCar);
     }
+
+    @Override
+    public Car buyCar(String renavam, double price) throws RemoteException {
+        final var carToBuy = getCar(renavam);
+        if (!carToBuy.getPrice().equals(price)) return null;
+        deleteCar(renavam);
+        return carToBuy;
+    }
 }
