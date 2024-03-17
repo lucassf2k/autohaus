@@ -12,7 +12,7 @@ public class Application {
     public static void main(String[] args) {
         try {
             final var implDatabaseRemote = new ImplDatabaseRemote();
-            final var skeleton = (AuthenticationRemote) UnicastRemoteObject
+            final var skeleton = (DatabaseRemote) UnicastRemoteObject
                     .exportObject(implDatabaseRemote, 0);
             LocateRegistry.createRegistry(ImplDatabaseRemote.PORT);
             final var registry = LocateRegistry.getRegistry(ImplDatabaseRemote.PORT);
