@@ -11,9 +11,9 @@ import java.rmi.server.UnicastRemoteObject;
 public class Application {
     public static void main(String[] args) {
         try {
-            final var implAuthenticationRemote = new ImplDatabaseRemote();
+            final var implDatabaseRemote = new ImplDatabaseRemote();
             final var skeleton = (AuthenticationRemote) UnicastRemoteObject
-                    .exportObject(implAuthenticationRemote, 0);
+                    .exportObject(implDatabaseRemote, 0);
             LocateRegistry.createRegistry(ImplDatabaseRemote.PORT);
             final var registry = LocateRegistry.getRegistry(ImplDatabaseRemote.PORT);
             registry.bind("database", skeleton);
