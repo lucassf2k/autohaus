@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public class ImplGatewayRemote implements GatewayRemote {
-    public static final int PORT = 20005;
+    public static final int PORT = 20006;
     private final AuthenticationRemote authenticationStub;
     private final DatabaseRemote carDatabaseStub;
 
