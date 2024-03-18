@@ -56,4 +56,15 @@ public class Car implements Serializable {
     public void setPrice(Double price) {
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return "Car{" +
+                "revavam='" + revavam + '\'' +
+                ", name='" + name + '\'' +
+                ", category=" + category +
+                ", yearManufacture='" + yearManufacture + '\'' +
+                ", price=" + price +
+                '}';
+    }
 }

@@ -25,7 +25,6 @@ public interface GatewayRemote extends Remote {
     List<Car> getCarOfCategory(int category) throws RemoteException;
     Boolean updateCar(
         String renavam,
-        String revavam,
         String name,
         CarCategories category,
         String yearManufacture,

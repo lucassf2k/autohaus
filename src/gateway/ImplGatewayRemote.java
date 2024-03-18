@@ -70,8 +70,8 @@ public class ImplGatewayRemote implements GatewayRemote {
     }
 
     @Override
-    public Boolean updateCar(String renavam, String revavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
-        final var updatedCar = new Car(revavam, name, category, yearManufacture, price);
+    public Boolean updateCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
+        final var updatedCar = new Car(renavam, name, category, yearManufacture, price);
         return carDatabaseStub.update(renavam, updatedCar);
     }
 
