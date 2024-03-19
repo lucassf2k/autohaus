@@ -24,37 +24,38 @@ public class ImplGatewayRemote implements GatewayRemote {
 
     @Override
     public ImplAuthenticationRemote.Credentials login(String email, String password) throws RemoteException {
+        System.out.println("enviando ao serviço de autenticação...");
         return authenticationStub.login(email, password);
     }
 
     @Override
     public Boolean createCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
-        System.out.println("RE: " + renavam);
-        System.out.println("NA: " + name);
-        System.out.println("CA: " + category.name());
-        System.out.println("ANO: " + yearManufacture);
-        System.out.println("PRE: " + price);
+        System.out.println("enviando ao serviço de banco de dados...");
         final var newCar = new Car(renavam, name, category, yearManufacture, price);
         return carDatabaseStub.save(newCar);
     }
 
     @Override
     public List<Car> list() throws RemoteException {
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.list();
     }
 
     @Override
     public Boolean deleteCar(String renanam) throws RemoteException {
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.delele(renanam);
     }
 
     @Override
     public Car getCar(String renavam) throws RemoteException {
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.get(renavam);
     }
 
     @Override
     public List<Car> getCarOfName(String name) throws RemoteException {
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.getOfName(name);
     }
 
@@ -70,12 +71,14 @@ public class ImplGatewayRemote implements GatewayRemote {
         if (category == 2) {
             carCategory = CarCategories.EXECUTIVE;
         }
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.getOfCategory(carCategory);
     }
 
     @Override
     public Boolean updateCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
         final var updatedCar = new Car(renavam, name, category, yearManufacture, price);
+        System.out.println("enviando ao serviço de banco de dados...");
         return carDatabaseStub.update(renavam, updatedCar);
     }
 
@@ -83,6 +86,7 @@ public class ImplGatewayRemote implements GatewayRemote {
     public Car buyCar(String renavam, double price) throws RemoteException {
         final var carToBuy = getCar(renavam);
         if (!carToBuy.getPrice().equals(price)) return null;
+        System.out.println("enviando ao serviço de banco de dados...");
         deleteCar(renavam);
         return carToBuy;
     }

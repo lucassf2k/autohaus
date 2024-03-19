@@ -28,6 +28,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public Boolean save(Car input) throws RemoteException {
+        System.out.println("processando cadastro de carro...");
         final var car = get(input.getRevavam());
         if (!Objects.isNull(car)) return Boolean.FALSE;
         DB.put(input.getRevavam(), input);
@@ -36,6 +37,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public List<Car> list() throws RemoteException {
+        System.out.println("processando listagem dos carros...");
         return DB.values()
                 .stream()
                 .sorted(Comparator.comparing(Car::getName))
@@ -44,6 +46,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public Boolean delele(String renavam) throws RemoteException {
+        System.out.println("processando remoção de carro...");
         final var car = DB.get(renavam);
         if (Objects.isNull(car)) return Boolean.FALSE;
         DB.remove(renavam);
@@ -52,11 +55,13 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public Car get(String renavam) throws RemoteException {
+        System.out.println("processando busca por renavam...");
         return DB.get(renavam);
     }
 
     @Override
     public List<Car> getOfName(String name) throws RemoteException {
+        System.out.println("processando busca por modelo do carro...");
         return DB.values()
                 .stream()
                 .filter(it -> it.getName().equals(name))
@@ -66,6 +71,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public List<Car> getOfCategory(CarCategories category) throws RemoteException {
+        System.out.println("processando busca por categorias...");
         return DB.values()
                 .stream()
                 .filter(it -> it.getCategory().equals(category))
@@ -75,6 +81,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
 
     @Override
     public Boolean update(String renavam, Car updatedCar) throws RemoteException {
+        System.out.println("processando atualização de carro...");
         final var car = get(renavam);
         if (Objects.isNull(car)) return Boolean.FALSE;
         car.setName(updatedCar.getName());

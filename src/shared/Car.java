@@ -61,7 +61,7 @@ public class Car implements Serializable {
     public String toString() {
         return name + " {" +
                 "Renavam: " + revavam +
-                ", Categoria: " + category +
+                ", Categoria: " + CarCategories.toPTBR(category) +
                 ", Ano de Fabricação: " + yearManufacture +
                 ", Preço: " + CurrencyFormatter.real(price) +
                 "}\n";
