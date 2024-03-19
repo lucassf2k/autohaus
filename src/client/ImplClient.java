@@ -51,11 +51,11 @@ public class ImplClient {
     }
 
     private void menu(ImplAuthenticationRemote.Credentials user) {
-        int option = 10;
+        int logged = 10;
         System.out.println("== O que quer fazer? ==");
         if (user.useType().equals(UserTypes.CUSTOMER)) {
             // listar, pesquisar, exibir quantidade de carros e comprar
-            while (option != 0) {
+            while (logged != 0) {
                 System.out.println("""
                         1 - Listar carros
                         2 - Pesquisar carro
@@ -65,10 +65,11 @@ public class ImplClient {
                         Digite "0" para fechar o sistema
                         """);
                 System.out.print("Opção: ");
-                option = scan.nextInt();
-                switch (option) {
+                logged = scan.nextInt();
+                scan.nextLine();
+                switch (logged) {
                     case 0: {
-                        option = 0;
+                        logged = 0;
                         break;
                     }
                     case 1: {
@@ -87,11 +88,15 @@ public class ImplClient {
                         buyCar();
                         break;
                     }
+                    default: {
+                        System.out.println("Nenhuma opção correspondente!");
+                        break;
+                    }
                 }
             }
         } else {
             //  listar, pesquisar, exibir quantidade de carros, comprar, apagar e atualizar
-            while (option != 0) {
+            while (logged != 0) {
                 System.out.println("""
                         1 - Listar carros
                         2 - Pesquisar carro
@@ -104,10 +109,11 @@ public class ImplClient {
                         Digite "sair" para fechar o sistema
                         """);
                 System.out.print("Opção: ");
-                option = scan.nextInt();
-                switch (option) {
+                logged = scan.nextInt();
+                scan.nextLine();
+                switch (logged) {
                     case 0: {
-                        option = 0;
+                        logged = 0;
                         break;
                     }
                     case 1: {
@@ -138,6 +144,10 @@ public class ImplClient {
                         updateCar();
                         break;
                     }
+                    default: {
+                        System.out.println("Nenhuma opção correspondente!");
+                        break;
+                    }
                 }
             }
         }
@@ -162,7 +172,9 @@ public class ImplClient {
                     \t 2 - Por Nome
                     \t 3 - Por Categoria
                     """);
+            System.out.print("Opção: ");
             final var option = scan.nextInt();
+            scan.nextLine();
             switch (option) {
                 case 1: {
                     System.out.println("\t Renavam: ");
@@ -173,7 +185,7 @@ public class ImplClient {
                     break;
                 }
                 case 2: {
-                    System.out.println("\t Nome: ");
+                    System.out.print("\t Nome: ");
                     final var name = scan.nextLine();
                     final var car = this.gatewayStub.getCarOfName(name);
                     if (Objects.isNull(car)) System.out.println("Nenhuma carro com esse nome!");
@@ -187,10 +199,16 @@ public class ImplClient {
                             \t 2 - Executivo
                             \t Categoria:
                             """);
+                    System.out.print("Opção: ");
                     final var category = scan.nextInt();
+                    scan.nextLine();
                     final var cars = this.gatewayStub.getCarOfCategory(category);
                     if (Objects.isNull(cars)) System.out.println("Nenhuma carro com essa categoria!");
                     else cars.forEach(car -> System.out.println(car.toString()));
+                    break;
+                }
+                default: {
+                    System.out.println("Nenhuma opção correspondente!");
                     break;
                 }
             }
@@ -211,7 +229,7 @@ public class ImplClient {
     }
 
     private void buyCar() {
-        System.out.println("Renavam: ");
+        System.out.print("Renavam: ");
         try {
             final var renavam = scan.nextLine();
             final var car = this.gatewayStub.getCar(renavam);
@@ -237,10 +255,12 @@ public class ImplClient {
         final var name = scan.nextLine();
         System.out.print("Categoria [0 = Econômica, 1 = Intermediário, 2 = Executivo]: ");
         final var category = scan.nextInt();
+        scan.nextLine();
         System.out.print("Ano de fabricação: ");
         final var yearOfManufacture = scan.nextLine();
         System.out.print("Preço: ");
         final var price = scan.nextDouble();
+        scan.nextLine();
         CarCategories carCategory = null;
         if (category == 0) {
             carCategory = CarCategories.ECONOMIC;
@@ -282,10 +302,12 @@ public class ImplClient {
         final var name = scan.nextLine();
         System.out.print("Categoria [0 = Econômica, 1 = Intermediário, 2 = Executivo]: ");
         final var category = scan.nextInt();
+        scan.nextLine();
         System.out.print("Ano de fabricação: ");
         final var yearOfManufacture = scan.nextLine();
         System.out.print("Preço: ");
         final var price = scan.nextDouble();
+        scan.nextLine();
         CarCategories carCategory = null;
         if (category == 0) {
             carCategory = CarCategories.ECONOMIC;

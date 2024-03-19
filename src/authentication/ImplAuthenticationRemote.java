@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ImplAuthenticationRemote implements AuthenticationRemote {
     public final static int PORT = 20004;
@@ -16,9 +17,12 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
     }
 
     @Override
-    public Credentials login(User user) throws RemoteException {
-        if (USERS.contains(user)) return new Credentials(Boolean.TRUE, user.type());
-        return new Credentials(Boolean.FALSE, user.type());
+    public Credentials login(String email, String password) throws RemoteException {
+        final var user = USERS.stream()
+                .filter(u -> u.email().equals(email) && u.password().equals(password))
+                .findFirst();
+        if (user.isEmpty()) return new Credentials(Boolean.FALSE, UserTypes.CUSTOMER);
+        else return new Credentials(Boolean.TRUE, user.get().type());
     }
 
     public record Credentials(Boolean isRegistered, UserTypes useType) implements Serializable {};

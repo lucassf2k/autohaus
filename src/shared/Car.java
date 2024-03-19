@@ -59,12 +59,11 @@ public class Car implements Serializable {
 
     @Override
     public String toString() {
-        return "Car{" +
-                "revavam='" + revavam + '\'' +
-                ", name='" + name + '\'' +
-                ", category=" + category +
-                ", yearManufacture='" + yearManufacture + '\'' +
-                ", price=" + price +
-                '}';
+        return name + " {" +
+                "Renavam: " + revavam +
+                ", Categoria: " + category +
+                ", Ano de Fabricação: " + yearManufacture +
+                ", Preço: " + CurrencyFormatter.real(price) +
+                "}\n";
     }
 }

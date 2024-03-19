@@ -29,7 +29,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
     @Override
     public Boolean save(Car input) throws RemoteException {
         final var car = get(input.getRevavam());
-        if (Objects.isNull(car)) return Boolean.FALSE;
+        if (!Objects.isNull(car)) return Boolean.FALSE;
         DB.put(input.getRevavam(), input);
         return Boolean.TRUE;
     }

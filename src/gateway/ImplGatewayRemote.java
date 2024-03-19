@@ -24,13 +24,17 @@ public class ImplGatewayRemote implements GatewayRemote {
 
     @Override
     public ImplAuthenticationRemote.Credentials login(String email, String password) throws RemoteException {
-        final var newUser = new User(email, password, UserTypes.CUSTOMER);
-        return authenticationStub.login(newUser);
+        return authenticationStub.login(email, password);
     }
 
     @Override
-    public Boolean createCar(String revavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
-        final var newCar = new Car(revavam, name, category, yearManufacture, price);
+    public Boolean createCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
+        System.out.println("RE: " + renavam);
+        System.out.println("NA: " + name);
+        System.out.println("CA: " + category.name());
+        System.out.println("ANO: " + yearManufacture);
+        System.out.println("PRE: " + price);
+        final var newCar = new Car(renavam, name, category, yearManufacture, price);
         return carDatabaseStub.save(newCar);
     }
 
