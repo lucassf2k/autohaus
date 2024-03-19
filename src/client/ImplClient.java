@@ -197,6 +197,7 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 
     private void numberOfCars() {
