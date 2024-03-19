@@ -36,9 +36,9 @@ public class ImplClient {
         ImplAuthenticationRemote.Credentials credentials = null;
         while (!isLogged) {
             System.out.println(" === Bem vindo === ");
-            System.out.println("Informe seu email: ");
+            System.out.print("Informe seu email: ");
             final var email = scan.nextLine();
-            System.out.println("Informe sua senha: ");
+            System.out.print("Informe sua senha: ");
             final var password = scan.nextLine();
             credentials = this.gatewayStub.login(email, password);
             if (credentials.isRegistered()) {
@@ -51,19 +51,26 @@ public class ImplClient {
     }
 
     private void menu(ImplAuthenticationRemote.Credentials user) {
-        String active = "";
+        int option = 10;
         System.out.println("== O que quer fazer? ==");
         if (user.useType().equals(UserTypes.CUSTOMER)) {
             // listar, pesquisar, exibir quantidade de carros e comprar
-            while (!active.equalsIgnoreCase("sair")) {
+            while (option != 0) {
                 System.out.println("""
                         1 - Listar carros
                         2 - Pesquisar carro
                         3 - Quantidade de carros
                         4 - Comprar carro
+                        
+                        Digite "0" para fechar o sistema
                         """);
-                var option = scan.nextInt();
+                System.out.print("Opção: ");
+                option = scan.nextInt();
                 switch (option) {
+                    case 0: {
+                        option = 0;
+                        break;
+                    }
                     case 1: {
                         listCar();
                         break;
@@ -84,7 +91,7 @@ public class ImplClient {
             }
         } else {
             //  listar, pesquisar, exibir quantidade de carros, comprar, apagar e atualizar
-            while (!active.equalsIgnoreCase("sair")) {
+            while (option != 0) {
                 System.out.println("""
                         1 - Listar carros
                         2 - Pesquisar carro
@@ -96,8 +103,13 @@ public class ImplClient {
                         
                         Digite "sair" para fechar o sistema
                         """);
-                var option = scan.nextInt();
+                System.out.print("Opção: ");
+                option = scan.nextInt();
                 switch (option) {
+                    case 0: {
+                        option = 0;
+                        break;
+                    }
                     case 1: {
                         listCar();
                         break;
@@ -133,13 +145,13 @@ public class ImplClient {
 
     private void listCar() {
         try {
-            System.out.println("== carros disponíveis ==");
-            this.gatewayStub
-                    .list()
-                    .forEach(car -> System.out.println(car.toString()));
+            final var cars = this.gatewayStub.list();
+            if (cars.isEmpty()) System.out.println("Nenhum carro disponível");
+            else cars.forEach(car -> System.out.println(car.toString()));
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 
     private void searchCar() {
@@ -194,7 +206,7 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("");
+        System.out.println();
     }
 
     private void buyCar() {
@@ -213,6 +225,7 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 
     private void registerCar() {
@@ -244,6 +257,7 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 
     private void removeCar() {
@@ -256,6 +270,7 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 
     private void updateCar() {
@@ -287,5 +302,6 @@ public class ImplClient {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+        System.out.println();
     }
 }

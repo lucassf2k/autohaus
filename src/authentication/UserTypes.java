@@ -1,5 +1,7 @@
 package authentication;
 
-public enum UserTypes {
+import java.io.Serializable;
+
+public enum UserTypes implements Serializable {
     CUSTOMER, EMPLOYEE
 }

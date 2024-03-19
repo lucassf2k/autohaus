@@ -1,5 +1,6 @@
 package authentication;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,5 +21,5 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         return new Credentials(Boolean.FALSE, user.type());
     }
 
-    public record Credentials(Boolean isRegistered, UserTypes useType) {};
+    public record Credentials(Boolean isRegistered, UserTypes useType) implements Serializable {};
 }

@@ -1,4 +1,6 @@
 package authentication;
 
-public record User(String email, String password, UserTypes type) {
+import java.io.Serializable;
+
+public record User(String email, String password, UserTypes type) implements Serializable {
 }
