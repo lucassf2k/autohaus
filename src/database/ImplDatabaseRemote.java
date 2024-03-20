@@ -64,7 +64,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
         System.out.println("processando busca por modelo do carro...");
         return DB.values()
                 .stream()
-                .filter(it -> it.getName().equals(name))
+                .filter(car -> car.getName().equals(name))
                 .sorted(Comparator.comparing(Car::getName))
                 .collect(Collectors.toList());
     }
@@ -74,7 +74,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
         System.out.println("processando busca por categorias...");
         return DB.values()
                 .stream()
-                .filter(it -> it.getCategory().equals(category))
+                .filter(car -> car.getCategory().equals(category))
                 .sorted(Comparator.comparing(Car::getName))
                 .collect(Collectors.toList());
     }
