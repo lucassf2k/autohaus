@@ -13,7 +13,7 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
     public ImplAuthenticationRemote() {
         USERS.add(new User("admin@autohaus.com", "autohaus2022", UserTypes.EMPLOYEE));
         USERS.add(new User("pedro@mail.com", "flamengo123", UserTypes.CUSTOMER));
-        USERS.add(new User("maria@mail.com", "gatodebotas123", UserTypes.CUSTOMER));
+        USERS.add(new User("vasco@mail.com", "dagama123", UserTypes.CUSTOMER));
     }
 
     @Override
