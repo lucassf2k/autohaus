@@ -13,11 +13,14 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public class ImplGatewayRemote implements GatewayRemote {
+    private DatabaseRemote databasesReplicas[];
+    private int currentReplica = 0;
+    private boolean isLeader = true;
     public static final int PORT = 20006;
     private final AuthenticationRemote authenticationStub;
-    private final DatabaseRemote carDatabaseStub;
+    private final List<DatabaseRemote> carDatabaseStub;
 
-    public ImplGatewayRemote(AuthenticationRemote authenticationStub, DatabaseRemote carDatabaseStub) {
+    public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabasesStub) {
         this.authenticationStub = authenticationStub;
         this.carDatabaseStub = carDatabaseStub;
     }

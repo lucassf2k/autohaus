@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ImplDatabaseRemote implements DatabaseRemote {
-    public final static int PORT = 20005;
+    public final static int[] PORTS = new int[]{20005,20006,20007};
     private final Map<String, Car> DB = new HashMap<>(){{
         put("54874150", new Car("54874150", "Fiat novo uno", CarCategories.ECONOMIC, "2010", 35_000.00));
         put("54874151", new Car("54874151", "Chevrolet onix", CarCategories.ECONOMIC, "2015", 48_000.00));
