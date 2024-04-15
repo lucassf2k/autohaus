@@ -1,5 +1,6 @@
 package shared;
 
+import javax.crypto.SecretKey;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -12,7 +13,7 @@ public class Message implements Serializable {
     private final BigInteger RSA_MODULUS;
     private final String HMAC_KEY;
     private final String VERNAM_KEY;
-    private final String AES_KEY;
+    private final SecretKey AES_KEY;
 
     public Message(
             MessageTypes type,
@@ -23,7 +24,7 @@ public class Message implements Serializable {
             BigInteger RSA_MODULUS,
             String HMAC_KEY,
             String VERNAM_KEY,
-            String AES_KEY) {
+            SecretKey AES_KEY) {
         this.type = type;
         this.content = content;
         this.HMAC = HMAC;
@@ -67,7 +68,7 @@ public class Message implements Serializable {
         return VERNAM_KEY;
     }
 
-    public String getAES_KEY() {
+    public SecretKey getAES_KEY() {
         return AES_KEY;
     }
 }

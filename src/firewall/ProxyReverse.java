@@ -2,6 +2,9 @@ package firewall;
 
 import gateway.GatewayRemote;
 import gateway.ImplGatewayRemote;
+import gateway.Response;
+import shared.Message;
+import shared.MessageTypes;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -10,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProxyReverse implements ProxyReverseProtocol {
+    public static final int PORT = 20008;
     private final List<Integer> filters =  new ArrayList<>();
     private final GatewayRemote gatewayStub;
 
@@ -23,13 +27,13 @@ public class ProxyReverse implements ProxyReverseProtocol {
     }
 
     @Override
-    public String execute(final Package pack) {
-        String output = "";
+    public Response execute(final Package pack) {
+        Response output = null;
         if (this.isAllowed(pack.sender())) {
             System.out.println("serviço permitdo para " + pack.sender());
             if (this.isAllowed(pack.receiver())) {
                 System.out.println("serviço permitido para " + pack.receiver());
-                // gateway
+                output = this.toForward(pack.content());
             }
         }
         return output;
@@ -40,5 +44,15 @@ public class ProxyReverse implements ProxyReverseProtocol {
             if (filter.equals(port)) return Boolean.TRUE;
         }
         return Boolean.FALSE;
+    }
+
+    private Response toForward(Message message) {
+        Response response = null;
+        try {
+            response = this.gatewayStub.execute(message);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+        return response;
     }
 }

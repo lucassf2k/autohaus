@@ -2,10 +2,19 @@ package client;
 
 import authentication.ImplAuthenticationRemote;
 import authentication.UserTypes;
+import crypto.RSA;
+import firewall.Package;
+import firewall.ProxyReverse;
+import firewall.ProxyReverseProtocol;
 import gateway.GatewayRemote;
 import gateway.ImplGatewayRemote;
+import sdc.ImplSdcService;
+import sdc.SdcService;
 import shared.CarCategories;
+import shared.Message;
+import shared.MessageTypes;
 
+import java.math.BigInteger;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -13,12 +22,24 @@ import java.util.Objects;
 import java.util.Scanner;
 
 public class ImplClient {
-    private final GatewayRemote gatewayStub;
+    private final ProxyReverseProtocol proxyReverseStub;
     private static final Scanner scan = new Scanner(System.in);
+    private final int PORT;
+    private final SdcService sdcStub;
+    private final BigInteger RSA_PRIVATE_KEY;
+    private final BigInteger RSA_PUBLIC_KEY;
+    private final BigInteger RSA_MODULUS;
 
-    public ImplClient() throws RemoteException, NotBoundException {
-        final var registry = LocateRegistry.getRegistry(ImplGatewayRemote.PORT);
-        this.gatewayStub = (GatewayRemote) registry.lookup("gateway");
+    public ImplClient(final int port) throws RemoteException, NotBoundException {
+        final var registryProxy = LocateRegistry.getRegistry(ProxyReverse.PORT);
+        this.proxyReverseStub = (ProxyReverseProtocol) registryProxy.lookup("proxy");
+        final var registrySdc = LocateRegistry.getRegistry(ImplSdcService.PORT);
+        this.sdcStub = (SdcService) registrySdc.lookup("sdc");
+        final var rsaKeys = sdcStub.getRSAKeys();
+        RSA_PRIVATE_KEY = rsaKeys.privateKey();
+        RSA_PUBLIC_KEY = rsaKeys.publicKey();
+        RSA_MODULUS = rsaKeys.modulus();
+        this.PORT = port;
         exec();
     }
 
@@ -40,7 +61,28 @@ public class ImplClient {
             final var email = scan.nextLine();
             System.out.print("Informe sua senha: ");
             final var password = scan.nextLine();
-            credentials = this.gatewayStub.login(email, password);
+            final var content = email + "-" + password;
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
+            final var hmacMessage = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.LOGIN,
+                    secureMessage,
+                    hmacMessage,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            if (Objects.isNull(response)) return credentials;
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.content(), response.HMAC_KEY(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            System.out.println(rawContent);
             if (credentials.isRegistered()) {
                 isLogged = Boolean.TRUE;
             } else {
@@ -155,9 +197,9 @@ public class ImplClient {
 
     private void listCar() {
         try {
-            final var cars = this.gatewayStub.list();
-            if (cars.isEmpty()) System.out.println("Nenhum carro disponível");
-            else cars.forEach(car -> System.out.println(car.toString()));
+            final var response = this.proxyReverseStub.execute(null);
+            if (Objects.isNull(response.content())) System.out.println("Nenhum carro disponível");
+            else System.out.println(response.content());;
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -179,7 +221,7 @@ public class ImplClient {
                 case 1: {
                     System.out.println("\t Renavam: ");
                     final var renavam = scan.nextLine();
-                    final var car = this.gatewayStub.getCar(renavam);
+                    final var car = this.proxyReverseStub.execute(null);
                     if (Objects.isNull(car)) System.out.println("Nenhuma carro com esse renavam!");
                     else System.out.println(car.toString());
                     break;
@@ -187,7 +229,7 @@ public class ImplClient {
                 case 2: {
                     System.out.print("\t Nome: ");
                     final var name = scan.nextLine();
-                    final var car = this.gatewayStub.getCarOfName(name);
+                    final var car = this.proxyReverseStub.execute(null);
                     if (Objects.isNull(car)) System.out.println("Nenhuma carro com esse nome!");
                     else System.out.println(car.toString());
                     break;
@@ -202,9 +244,9 @@ public class ImplClient {
                     System.out.print("Opção: ");
                     final var category = scan.nextInt();
                     scan.nextLine();
-                    final var cars = this.gatewayStub.getCarOfCategory(category);
-                    if (Objects.isNull(cars)) System.out.println("Nenhuma carro com essa categoria!");
-                    else cars.forEach(car -> System.out.println(car.toString()));
+                    final var response = this.proxyReverseStub.execute(null);
+                    if (Objects.isNull(response.content())) System.out.println("Nenhuma carro com essa categoria!");
+                    else System.out.println(response.content());;
                     break;
                 }
                 default: {
@@ -220,8 +262,8 @@ public class ImplClient {
 
     private void numberOfCars() {
         try {
-            final var cars = this.gatewayStub.list();
-            System.out.println("Total de carros: " + cars.size());
+            final var response = this.proxyReverseStub.execute(null);
+            System.out.println("Total de carros: " + response.content());
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -232,13 +274,13 @@ public class ImplClient {
         System.out.print("Renavam: ");
         try {
             final var renavam = scan.nextLine();
-            final var car = this.gatewayStub.getCar(renavam);
+            final var car = this.proxyReverseStub.execute(null);
             if (Objects.isNull(car)) {
                 System.out.println("Nenhum carro com esse renavam!");
                 return;
             }
             System.out.println(car.toString());
-            final var purchasedCar = this.gatewayStub.buyCar(renavam, car.getPrice());
+            final var purchasedCar = this.proxyReverseStub.execute(null);
             if (Objects.isNull(purchasedCar)) System.out.println("Pix não foi! Faça novamente!");
             else System.out.println("Carro comprado com sucesso!");
         } catch (RemoteException e) {
@@ -272,8 +314,8 @@ public class ImplClient {
             carCategory = CarCategories.EXECUTIVE;
         }
         try {
-            final var isSucess = this.gatewayStub.createCar(renavam, name, carCategory, yearOfManufacture, price);
-            if (!isSucess) System.out.println("Cadastro não funcionou! Tente novamente. OBS.: Já pode existir esse renavam");
+            final var response = this.proxyReverseStub.execute(null);
+            if (Objects.isNull(response.content())) System.out.println("Cadastro não funcionou! Tente novamente. OBS.: Já pode existir esse renavam");
             else System.out.println("Carro cadastrado com sucesso.");
         } catch (RemoteException e) {
             throw new RuntimeException(e);
@@ -285,8 +327,8 @@ public class ImplClient {
         System.out.print("Renavam: ");
         final var renavam = scan.nextLine();
         try {
-            final var sucess = this.gatewayStub.deleteCar(renavam);
-            if (!sucess) System.out.println("Não foi possível remover esse carro! Verifique o renavam.");
+            final var response = this.proxyReverseStub.execute(null);
+            if (Objects.isNull(response)) System.out.println("Não foi possível remover esse carro! Verifique o renavam.");
             else System.out.println("Carro com renavam: " + renavam + " apagado com sucesso.");
         } catch (RemoteException e) {
             throw new RuntimeException(e);
@@ -319,8 +361,8 @@ public class ImplClient {
             carCategory = CarCategories.EXECUTIVE;
         }
         try {
-            final var isSucess = this.gatewayStub.updateCar(renavam, name, carCategory, yearOfManufacture, price);
-            if (!isSucess) System.out.println("Não foi possível atualizar! Verique o renavam.");
+            final var response = this.proxyReverseStub.execute(null);
+            if (Objects.isNull(response)) System.out.println("Não foi possível atualizar! Verique o renavam.");
             else System.out.println("Carro atualizado com sucesso.");
         } catch (RemoteException e) {
             throw new RuntimeException(e);

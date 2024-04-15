@@ -26,5 +26,5 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         else return new Credentials(Boolean.TRUE, user.get().type());
     }
 
-    public record Credentials(Boolean isRegistered, UserTypes useType) implements Serializable {};
+    public record Credentials(boolean isRegistered, UserTypes useType) implements Serializable {};
 }

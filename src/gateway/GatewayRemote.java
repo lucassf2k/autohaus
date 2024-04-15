@@ -4,6 +4,8 @@ import authentication.ImplAuthenticationRemote;
 import authentication.User;
 import shared.Car;
 import shared.CarCategories;
+import shared.Message;
+import shared.MessageTypes;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -31,4 +33,5 @@ public interface GatewayRemote extends Remote {
         Double price
     ) throws RemoteException;
     Car buyCar(String renavam, double price) throws RemoteException;
+    Response execute(Message message) throws RemoteException;
 }
