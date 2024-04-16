@@ -10,15 +10,16 @@ import shared.CarCategories;
 
 import javax.security.auth.login.CredentialNotFoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ImplGatewayRemote implements GatewayRemote {
     private DatabaseRemote databasesReplicas[];
     private int currentReplica = 0;
     private boolean isLeader = true;
-    public static final int PORT = 20006;
+    public static final int PORT = 20008;
     private final AuthenticationRemote authenticationStub;
-    private final List<DatabaseRemote> carDatabaseStub;
+    private List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
 
     public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabasesStub) {
         this.authenticationStub = authenticationStub;
@@ -35,12 +36,21 @@ public class ImplGatewayRemote implements GatewayRemote {
     public Boolean createCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         final var newCar = new Car(renavam, name, category, yearManufacture, price);
-        return carDatabaseStub.save(newCar);
+        if(isLeader){
+        for(int i = 0;i< databasesReplicas.length; i++){
+                if(databasesReplicas[i] != this){
+                    databasesReplicas[i].save(newCar);
+                }
+            }
+        }
+        nextReplica();
+        return true;
     }
 
     @Override
     public List<Car> list() throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
+        getReplica();
         return carDatabaseStub.list();
     }
 
@@ -92,5 +102,13 @@ public class ImplGatewayRemote implements GatewayRemote {
         System.out.println("enviando ao serviço de banco de dados...");
         deleteCar(renavam);
         return carToBuy;
+    }
+
+    private void nextReplica(){
+        currentReplica = (currentReplica + 1) % databasesReplicas.length;
+    }
+
+    private int getReplica(){
+        return currentReplica;
     }
 }

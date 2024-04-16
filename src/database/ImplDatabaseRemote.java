@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class ImplDatabaseRemote implements DatabaseRemote {
     public final static int[] PORTS = new int[]{20005,20006,20007};
+    public static boolean isCoord = true;
     private final Map<String, Car> DB = new HashMap<>(){{
         put("54874150", new Car("54874150", "Fiat novo uno", CarCategories.ECONOMIC, "2010", 35_000.00));
         put("54874151", new Car("54874151", "Chevrolet onix", CarCategories.ECONOMIC, "2015", 48_000.00));
@@ -91,5 +92,41 @@ public class ImplDatabaseRemote implements DatabaseRemote {
         DB.remove(renavam);
         DB.put(renavam, car);
         return Boolean.TRUE;
+    }
+
+    
+
+    @Override
+    public DatabaseRemote valentao() throws RemoteException {
+        try {
+            private List<DatabaseRemote> replicasConcorrentes = new ArrayList<>();
+            for(DatabaseRemote replica : replicas){
+                if(!replica.isCoord){
+                    replicasConcorrentes.add(replica);
+                }
+
+            }
+            for(replicas : replicasConcorrentes){
+                
+            }
+            
+
+            }
+            catch (Exception e) {
+                // TODO: handle exception
+            } 
+        throw new UnsupportedOperationException("Unimplemented method 'startEllections'");
+    }
+
+    @Override
+    public int getId() throws RemoteException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getId'");
+    } 
+
+    @Override
+    public void setId() throws RemoteException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setId'");
     }
 }
