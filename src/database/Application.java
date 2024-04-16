@@ -11,10 +11,12 @@ public class Application {
             final var implDatabaseRemote = new ImplDatabaseRemote();
             final var skeleton = (DatabaseRemote) UnicastRemoteObject
                     .exportObject(implDatabaseRemote, 0);
-            LocateRegistry.createRegistry(ImplDatabaseRemote.PORT);
-            final var registry = LocateRegistry.getRegistry(ImplDatabaseRemote.PORT);
+            LocateRegistry.createRegistry(ImplDatabaseRemote.PORTS[0]);
+            final var registry = LocateRegistry.getRegistry(ImplDatabaseRemote.PORTS[0]);
             registry.bind("database", skeleton);
-            System.out.println("serviço de banco de dados rodando em " + ImplDatabaseRemote.PORT);
+            System.out.println("serviço de banco de dados rodando em " + ImplDatabaseRemote.PORTS[0]);
+            
+            
         } catch (RemoteException | AlreadyBoundException e) {
             throw new RuntimeException(e);
         }
