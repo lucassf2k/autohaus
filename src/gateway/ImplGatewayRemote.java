@@ -51,25 +51,35 @@ public class ImplGatewayRemote implements GatewayRemote {
     public List<Car> list() throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         getReplica();
-        return carDatabaseStub.list();
+        return databasesReplicas[0].list();
     }
 
     @Override
     public Boolean deleteCar(String renanam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        return carDatabaseStub.delele(renanam);
+        if(isLeader){
+            for (int i = 0; i < databasesReplicas.length; i++) {
+                if (databasesReplicas[i] != this) {
+                    databasesReplicas[i].delele(renanam);
+                    System.out.println("Atualizado na réplica " + i);
+                }
+            }
+        }
+        return true;
     }
 
     @Override
     public Car getCar(String renavam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        return carDatabaseStub.get(renavam);
+        getReplica();
+        return databasesReplicas[0].get(renavam);
     }
 
     @Override
     public List<Car> getCarOfName(String name) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        return carDatabaseStub.getOfName(name);
+        getReplica();
+        return databasesReplicas[0].getOfName(name);
     }
 
     @Override
@@ -85,14 +95,24 @@ public class ImplGatewayRemote implements GatewayRemote {
             carCategory = CarCategories.EXECUTIVE;
         }
         System.out.println("enviando ao serviço de banco de dados...");
-        return carDatabaseStub.getOfCategory(carCategory);
+        return databasesReplicas[0].getOfCategory(carCategory);
     }
 
     @Override
     public Boolean updateCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
         final var updatedCar = new Car(renavam, name, category, yearManufacture, price);
         System.out.println("enviando ao serviço de banco de dados...");
-        return carDatabaseStub.update(renavam, updatedCar);
+        if(isLeader){
+            for (int i = 0; i < databasesReplicas.length; i++) {
+                if (databasesReplicas[i] != this) {
+                    databasesReplicas[i].update(renavam, updatedCar);
+                    System.out.println("Atualizado na réplica " + i);
+                }
+            }
+        }
+        getReplica();
+        nextReplica();
+        return true;
     }
 
     @Override
@@ -101,6 +121,16 @@ public class ImplGatewayRemote implements GatewayRemote {
         if (!carToBuy.getPrice().equals(price)) return null;
         System.out.println("enviando ao serviço de banco de dados...");
         deleteCar(renavam);
+        if(isLeader){
+            for(int i = 0;i< databasesReplicas.length; i++){
+                    if(databasesReplicas[i] != this){
+                        databasesReplicas[i].list();
+
+                    }
+                }
+            }
+            getReplica();
+            nextReplica();
         return carToBuy;
     }
 
@@ -108,7 +138,7 @@ public class ImplGatewayRemote implements GatewayRemote {
         currentReplica = (currentReplica + 1) % databasesReplicas.length;
     }
 
-    private int getReplica(){
-        return currentReplica;
+    private String getReplica(){
+        return "Réplica: " + currentReplica;
     }
 }

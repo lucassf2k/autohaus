@@ -58,6 +58,7 @@ public class ImplDatabaseRemote implements DatabaseRemote {
     public Car get(String renavam) throws RemoteException {
         System.out.println("processando busca por renavam...");
         return DB.get(renavam);
+
     }
 
     @Override
@@ -92,41 +93,5 @@ public class ImplDatabaseRemote implements DatabaseRemote {
         DB.remove(renavam);
         DB.put(renavam, car);
         return Boolean.TRUE;
-    }
-
-    
-
-    @Override
-    public DatabaseRemote valentao() throws RemoteException {
-        try {
-            private List<DatabaseRemote> replicasConcorrentes = new ArrayList<>();
-            for(DatabaseRemote replica : replicas){
-                if(!replica.isCoord){
-                    replicasConcorrentes.add(replica);
-                }
-
-            }
-            for(replicas : replicasConcorrentes){
-                
-            }
-            
-
-            }
-            catch (Exception e) {
-                // TODO: handle exception
-            } 
-        throw new UnsupportedOperationException("Unimplemented method 'startEllections'");
-    }
-
-    @Override
-    public int getId() throws RemoteException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getId'");
-    } 
-
-    @Override
-    public void setId() throws RemoteException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setId'");
     }
 }
