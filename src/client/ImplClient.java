@@ -1,7 +1,9 @@
 package client;
 
 import authentication.ImplAuthenticationRemote;
+import authentication.User;
 import authentication.UserTypes;
+import crypto.HMAC;
 import crypto.RSA;
 import firewall.Package;
 import firewall.ProxyReverse;
@@ -14,10 +16,14 @@ import shared.CarCategories;
 import shared.Message;
 import shared.MessageTypes;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -53,7 +59,7 @@ public class ImplClient {
     }
 
     private ImplAuthenticationRemote.Credentials login() throws RemoteException {
-        Boolean isLogged = Boolean.FALSE;
+        boolean isLogged = Boolean.FALSE;
         ImplAuthenticationRemote.Credentials credentials = null;
         while (!isLogged) {
             System.out.println(" === Bem vindo === ");
@@ -66,11 +72,11 @@ public class ImplClient {
             final var aesKey = sdcStub.getAESKey();
             final var hmacKey = sdcStub.getVernamKey();
             final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
-            final var hmacMessage = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
             final var message = new Message(
                     MessageTypes.LOGIN,
                     secureMessage,
-                    hmacMessage,
+                    rsaSignature,
                     null,
                     RSA_PUBLIC_KEY,
                     RSA_MODULUS,
@@ -81,10 +87,20 @@ public class ImplClient {
             final var response = this.proxyReverseStub.execute(pack);
             if (Objects.isNull(response)) return credentials;
             final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
-            final var checkHmac = sdcStub.checkSignMessage(response.content(), response.HMAC_KEY(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
-            System.out.println(rawContent);
-            if (credentials.isRegistered()) {
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                return credentials;
+            }
+            final var splitRawContent = rawContent.split("-");
+            final var isRegistered = splitRawContent[0];
+            final var userType = splitRawContent[1];
+            if (Integer.parseInt(isRegistered) == 1) {
                 isLogged = Boolean.TRUE;
+                UserTypes userTypeCredential = UserTypes.CUSTOMER;
+                if (userType.equals("EMPLOYEE")) userTypeCredential = UserTypes.EMPLOYEE;
+                credentials = new ImplAuthenticationRemote.Credentials(isLogged, userTypeCredential);
             } else {
                 System.out.println("login incorreto!");
             }
@@ -197,9 +213,27 @@ public class ImplClient {
 
     private void listCar() {
         try {
-            final var response = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(response.content())) System.out.println("Nenhum carro disponível");
-            else System.out.println(response.content());;
+            final var message = new Message(
+                    MessageTypes.LIST_CAR,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            if (response.content().isEmpty()) System.out.println("Nenhum carro disponível");
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            else System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -207,63 +241,102 @@ public class ImplClient {
     }
 
     private void searchCar() {
-        try {
-            System.out.println("""
-                    \t == escolha o tipo da pesquisa ==
-                    \t 1 - Por Renavam
-                    \t 2 - Por Nome
-                    \t 3 - Por Categoria
-                    """);
-            System.out.print("Opção: ");
-            final var option = scan.nextInt();
-            scan.nextLine();
-            switch (option) {
-                case 1: {
-                    System.out.println("\t Renavam: ");
-                    final var renavam = scan.nextLine();
-                    final var car = this.proxyReverseStub.execute(null);
-                    if (Objects.isNull(car)) System.out.println("Nenhuma carro com esse renavam!");
-                    else System.out.println(car.toString());
-                    break;
-                }
-                case 2: {
-                    System.out.print("\t Nome: ");
-                    final var name = scan.nextLine();
-                    final var car = this.proxyReverseStub.execute(null);
-                    if (Objects.isNull(car)) System.out.println("Nenhuma carro com esse nome!");
-                    else System.out.println(car.toString());
-                    break;
-                }
-                case 3: {
-                    System.out.println("""
-                            \t 0 - Econômica
-                            \t 1 - Intermediário
-                            \t 2 - Executivo
-                            \t Categoria:
-                            """);
-                    System.out.print("Opção: ");
-                    final var category = scan.nextInt();
-                    scan.nextLine();
-                    final var response = this.proxyReverseStub.execute(null);
-                    if (Objects.isNull(response.content())) System.out.println("Nenhuma carro com essa categoria!");
-                    else System.out.println(response.content());;
-                    break;
-                }
-                default: {
-                    System.out.println("Nenhuma opção correspondente!");
-                    break;
-                }
+        System.out.println("""
+                \t == escolha o tipo da pesquisa ==
+                \t 1 - Por Renavam
+                \t 2 - Por Nome
+                \t 3 - Por Categoria
+                """);
+        System.out.print("Opção: ");
+        final var option = scan.nextInt();
+        scan.nextLine();
+        String input = "";
+        switch (option) {
+            case 1: {
+                System.out.println("\t Renavam: ");
+                input = scan.nextLine();
+                break;
             }
+            case 2: {
+                System.out.print("\t Nome: ");
+                input = scan.nextLine();
+                break;
+            }
+            case 3: {
+                System.out.println("""
+                        \t 0 - Econômica
+                        \t 1 - Intermediário
+                        \t 2 - Executivo
+                        \t Categoria:
+                        """);
+                System.out.print("Opção: ");
+                input = String.valueOf(scan.nextInt());
+                scan.nextLine();
+                break;
+            }
+            default: {
+                System.out.println("Nenhuma opção correspondente!");
+                break;
+            }
+
+        }
+        try {
+            final var content = option + "-" + input;
+            System.out.println(content);
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.SEARCH_CAR,
+                    secureMessage,
+                    rsaSignature,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+
         System.out.println();
     }
 
     private void numberOfCars() {
         try {
-            final var response = this.proxyReverseStub.execute(null);
-            System.out.println("Total de carros: " + response.content());
+            final var message = new Message(
+                    MessageTypes.NUMBER_OF_CARS,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            System.out.println("Total de carros: " + rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -274,15 +347,31 @@ public class ImplClient {
         System.out.print("Renavam: ");
         try {
             final var renavam = scan.nextLine();
-            final var car = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(car)) {
-                System.out.println("Nenhum carro com esse renavam!");
-                return;
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(renavam, vernamKey, aesKey);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.BUY_CAR,
+                    secureMessage,
+                    rsaSignature,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
             }
-            System.out.println(car.toString());
-            final var purchasedCar = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(purchasedCar)) System.out.println("Pix não foi! Faça novamente!");
-            else System.out.println("Carro comprado com sucesso!");
+            System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -303,20 +392,33 @@ public class ImplClient {
         System.out.print("Preço: ");
         final var price = scan.nextDouble();
         scan.nextLine();
-        CarCategories carCategory = null;
-        if (category == 0) {
-            carCategory = CarCategories.ECONOMIC;
-        }
-        if (category == 1) {
-            carCategory = CarCategories.INTERMEDIATE;
-        }
-        if (category == 2) {
-            carCategory = CarCategories.EXECUTIVE;
-        }
         try {
-            final var response = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(response.content())) System.out.println("Cadastro não funcionou! Tente novamente. OBS.: Já pode existir esse renavam");
-            else System.out.println("Carro cadastrado com sucesso.");
+            final var content = renavam + "-" + name + "-" + category + "-" + yearOfManufacture + "-" + price;
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.REGISTER_CAR,
+                    secureMessage,
+                    rsaSignature,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -327,9 +429,31 @@ public class ImplClient {
         System.out.print("Renavam: ");
         final var renavam = scan.nextLine();
         try {
-            final var response = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(response)) System.out.println("Não foi possível remover esse carro! Verifique o renavam.");
-            else System.out.println("Carro com renavam: " + renavam + " apagado com sucesso.");
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(renavam, vernamKey, aesKey);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.REMOVE_CAR,
+                    secureMessage,
+                    rsaSignature,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -350,23 +474,62 @@ public class ImplClient {
         System.out.print("Preço: ");
         final var price = scan.nextDouble();
         scan.nextLine();
-        CarCategories carCategory = null;
-        if (category == 0) {
-            carCategory = CarCategories.ECONOMIC;
-        }
-        if (category == 1) {
-            carCategory = CarCategories.INTERMEDIATE;
-        }
-        if (category == 2) {
-            carCategory = CarCategories.EXECUTIVE;
-        }
         try {
-            final var response = this.proxyReverseStub.execute(null);
-            if (Objects.isNull(response)) System.out.println("Não foi possível atualizar! Verique o renavam.");
-            else System.out.println("Carro atualizado com sucesso.");
+            final var content = renavam + "-" + name + "-" + category + "-" + yearOfManufacture + "-" + price;
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var message = new Message(
+                    MessageTypes.UPDATE_CAR,
+                    secureMessage,
+                    rsaSignature,
+                    null,
+                    RSA_PUBLIC_KEY,
+                    RSA_MODULUS,
+                    hmacKey,
+                    vernamKey,
+                    aesKey);
+            final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
+            final var response = this.proxyReverseStub.execute(pack);
+            final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
+            final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
+            final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
+            if (!isAuthentic) {
+                System.out.println("autenticidade inválida vindo do gateway");
+                this.login();
+            }
+            System.out.println(rawContent);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
         System.out.println();
+    }
+
+    private boolean checkingAuthenticity(String hmacKey, String secureContent, String hmac) {
+        try {
+            final var hmacCompare = HMAC.hMac(hmacKey, secureContent);
+            return hmacCompare.equals(hmac);
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String[] makeMessageSecure(String content) {
+        try {
+            final var vernamKey = sdcStub.getVernamKey();
+            final var aesKey = sdcStub.getAESKey();
+            final var hmacKey = sdcStub.getVernamKey();
+            final var secureMessage = sdcStub.encryptMessage(content, vernamKey, aesKey);
+            System.out.println(secureMessage);
+            final var rsaSignature = sdcStub.signMessage(secureMessage, hmacKey, RSA_PRIVATE_KEY, RSA_MODULUS);
+            final var output = new String[2];
+            output[0] = secureMessage;
+            output[1] = rsaSignature;
+            return output;
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

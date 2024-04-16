@@ -73,8 +73,9 @@ public class ImplSdcService implements SdcService {
     }
 
     @Override
-    public String checkSignMessage(String secureMessage, String hmacKey, BigInteger rsaPublicKey, BigInteger rsaModulus) throws RemoteException {
-       return RSA.checkSignature(secureMessage, rsaPublicKey, rsaModulus);
+    public String checkSignMessage(String secureMessage, BigInteger rsaPublicKey, BigInteger rsaModulus) throws RemoteException {
+        System.out.println(secureMessage);
+        return RSA.checkSignature(secureMessage, rsaPublicKey, rsaModulus);
     }
 
     private SecretKey generateAESKey() {
