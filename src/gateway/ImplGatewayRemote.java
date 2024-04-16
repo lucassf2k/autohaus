@@ -16,14 +16,15 @@ import java.util.List;
 public class ImplGatewayRemote implements GatewayRemote {
     private DatabaseRemote databasesReplicas[];
     private int currentReplica = 0;
-    private boolean isLeader = true;
+    private boolean isLeader;
     public static final int PORT = 20008;
     private final AuthenticationRemote authenticationStub;
     private List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
 
-    public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabasesStub) {
+    public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabasesStub, Boolean isLeader) {
         this.authenticationStub = authenticationStub;
         this.carDatabaseStub = carDatabaseStub;
+        this.isLeader = isLeader;
     }
 
     @Override

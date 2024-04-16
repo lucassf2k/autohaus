@@ -32,7 +32,7 @@ public class Application {
             databaseStub = (DatabaseRemote) registryDB.lookup("database3");
             databases.add(databaseStub);
 
-            final var implGatewayRemote = new ImplGatewayRemote(authenticationStub, databases);
+            final var implGatewayRemote = new ImplGatewayRemote(authenticationStub, databases,true);
             final var skeleton = (GatewayRemote) UnicastRemoteObject
                     .exportObject(implGatewayRemote, 0);
             LocateRegistry.createRegistry(ImplGatewayRemote.PORT);
