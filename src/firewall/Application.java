@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Application {
     public static void main(String[] args) throws UnknownHostException {
-        System.setProperty("java.rmi.server.hostname", "192.168.0.8");
+        System.setProperty("java.rmi.server.hostname", "10.215.6.253");
 		System.setProperty("java.security.policy", "java.policy");
         try {
             final var proxyReverse = new ProxyReverse();
