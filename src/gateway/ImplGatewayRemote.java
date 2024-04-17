@@ -66,6 +66,8 @@ public class ImplGatewayRemote implements GatewayRemote {
         for(int i = 0;i< carDatabaseStub.size(); i++){
                 if(carDatabaseStub.get(i) != this){
                     carDatabaseStub.get(i).save(newCar);
+                }else{
+                    carDatabaseStub.get(i).save(newCar);
                 }
             }
         }
@@ -93,10 +95,14 @@ public class ImplGatewayRemote implements GatewayRemote {
     public Boolean deleteCar(String renanam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         if(isLeader){
+            
             for (int i = 0; i < carDatabaseStub.size(); i++) {
                 if (carDatabaseStub.get(i) != this) {
                     carDatabaseStub.get(i).delele(renanam);
                     System.out.println("Atualizado na réplica " + i);
+                }
+                else{
+                    carDatabaseStub.get(i).delele(renanam);
                 }
             }
         }
@@ -155,6 +161,9 @@ public class ImplGatewayRemote implements GatewayRemote {
                 if (carDatabaseStub.get(i) != this) {
                     carDatabaseStub.get(i).update(renavam, updatedCar);
                     System.out.println("Atualizado na réplica " + i);
+                }
+                else{
+                    carDatabaseStub.get(i).update(renavam,updatedCar);
                 }
             }
         }

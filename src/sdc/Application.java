@@ -9,16 +9,16 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Application {
     public static void main(String[] args) {
-        System.setProperty("java.rmi.server.hostname", "10.215.6.253");
+        System.setProperty("java.rmi.server.hostname", "172.20.10.2");
         System.setProperty("java.security.policy", "java.policy");
         try {
             final var sdc = new ImplSdcService();
             final var skeleton = (SdcService) UnicastRemoteObject.exportObject(sdc, 0);
             LocateRegistry.createRegistry(ImplSdcService.PORT);
-            final var registry = LocateRegistry.getRegistry(InetAddress.getLocalHost().getHostAddress(), ImplSdcService.PORT);
+            final var registry = LocateRegistry.getRegistry("172.20.10.2", ImplSdcService.PORT);
             registry.bind("sdc", skeleton);
             System.out.println("serviço de distribuíção de chaves rodando em " + ImplSdcService.PORT);
-        } catch (RemoteException | AlreadyBoundException | UnknownHostException e) {
+        } catch (RemoteException | AlreadyBoundException e) {
             throw new RuntimeException(e);
         }
     }
