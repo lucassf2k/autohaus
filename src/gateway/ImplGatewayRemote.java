@@ -77,8 +77,16 @@ public class ImplGatewayRemote implements GatewayRemote {
     public List<Car> list() throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         getReplica();
-        return databasesReplicas[0].list();
+        List<Car> listinha = new ArrayList<Car>();
+        if (isLeader) {
+            for (int i = 0; i < databasesReplicas.length; i++) {
+                if (databasesReplicas[i] != this) {
+                    listinha = databasesReplicas[i].list();
+                }
+        }  
     }
+    return listinha;
+}
 
     @Override
     public Boolean deleteCar(String renanam) throws RemoteException {
@@ -91,6 +99,7 @@ public class ImplGatewayRemote implements GatewayRemote {
                 }
             }
         }
+        nextReplica();
         return true;
     }
 
@@ -98,7 +107,15 @@ public class ImplGatewayRemote implements GatewayRemote {
     public Car getCar(String renavam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         getReplica();
-        return databasesReplicas[0].get(renavam);
+        Car carro = new Car(renavam, renavam, null, renavam, null);
+        if(isLeader){
+            for (int i = 0; i < databasesReplicas.length; i++) {
+                if (databasesReplicas[i] != this) {
+                    carro = databasesReplicas[i].get(renavam);
+                }
+            }
+        }
+        return carro;
     }
 
     @Override
@@ -151,7 +168,6 @@ public class ImplGatewayRemote implements GatewayRemote {
             for(int i = 0;i< databasesReplicas.length; i++){
                     if(databasesReplicas[i] != this){
                         databasesReplicas[i].list();
-
                     }
                 }
             }
