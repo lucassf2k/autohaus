@@ -4,14 +4,13 @@ import crypto.PBKDF2Password;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ImplAuthenticationRemote implements AuthenticationRemote {
     public final static int PORT = 20004;
     private final List<User> USERS = new ArrayList<>();
     private static int loginAttempts = 0;
+    private List<AttemptControl> attemptControl = new ArrayList<>();
 
     public ImplAuthenticationRemote() {
         final var userAdminPassword = PBKDF2Password.create("autohaus2022", null);
@@ -35,6 +34,7 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
                 UserTypes.CUSTOMER,
                 user2Password[0]);
         USERS.add(user2);
+        System.out.println(USERS.toString());
     }
 
     @Override
@@ -42,23 +42,19 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         System.out.println("processando login...");
         System.out.println(email);
         System.out.println(password);
-        final var user = USERS.stream()
-                .filter(u -> u.email().equals(email) && u.password().equals(password))
-                .findFirst();
-        if (user.isEmpty()) {
-            loginAttempts++;
-            if (loginAttempts == 3) {
-                loginAttempts = 0;
-                try {
-                    System.out.println("3 tentativas erradas de login...");
-                    System.out.println("Espere 1 min e tente novamente");
-                    Thread.sleep(60000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        final var user = this.get(email);
+        if (user != null) {
+            final var comparePassword = PBKDF2Password.create(password, user.salt());
+            if (comparePassword[1].equals(user.password())) {
+//                attempts(email);
+                return new Credentials(Boolean.TRUE, user.type());
+            } else {
+//                attempts(email);
+                return new Credentials(Boolean.FALSE, user.type());
             }
-            return new Credentials(Boolean.FALSE, UserTypes.CUSTOMER);
-        } else return new Credentials(Boolean.TRUE, user.get().type());
+        }
+//        attempts(email);
+        return new Credentials(Boolean.FALSE, UserTypes.CUSTOMER);
     }
 
     @Override
@@ -71,6 +67,32 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         return user.orElse(null);
     }
 
-    private record AttemptControl() {}
+    private void attempts(String email) {
+        for (var att : attemptControl) {
+            if (att.email.equals(email)) {
+                att.attemps++;
+                if (att.attemps == 3) {
+                    att.attemps = 0;
+                    try {
+                        System.out.println("3 tentativas erradas de login...");
+                        System.out.println("Espere 1 min e tente novamente");
+                        Thread.sleep(60000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            } else attemptControl.add(new AttemptControl(email));
+        }
+    }
+
+    private static class AttemptControl {
+        public String email;
+        public int attemps;
+
+        public AttemptControl(String email) {
+            this.email = email;
+            attemps = 0;
+        }
+    }
     public record Credentials(boolean isRegistered, UserTypes useType) implements Serializable {};
 }
