@@ -30,7 +30,7 @@ public class ImplGatewayRemote implements GatewayRemote {
     private DatabaseRemote databasesReplicas[];
     private int currentReplica = 0;
     private boolean isLeader;
-    public static final int PORT = 20008;
+    public static final int PORT = 20010;
     private final AuthenticationRemote authenticationStub;
 
     private List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
@@ -40,7 +40,7 @@ public class ImplGatewayRemote implements GatewayRemote {
     private final BigInteger RSA_MODULUS;
     private final SdcService sdcStub;
 
-    public ImplGatewayRemote(AuthenticationRemote authenticationStub, DatabaseRemote carDatabaseStub, Boolean isLeader) throws RemoteException, NotBoundException {
+    public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabaseStub, Boolean isLeader) throws RemoteException, NotBoundException {
         this.authenticationStub = authenticationStub;
         this.carDatabaseStub = carDatabaseStub;
         this.isLeader = isLeader;

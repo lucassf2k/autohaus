@@ -7,18 +7,19 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Application {
     public static void main(String[] args) {
-        try {
-            final var implDatabaseRemote = new ImplDatabaseRemote();
-            final var skeleton = (DatabaseRemote) UnicastRemoteObject
-                    .exportObject(implDatabaseRemote, 0);
-            LocateRegistry.createRegistry(ImplDatabaseRemote.PORTS[0]);
-            final var registry = LocateRegistry.getRegistry(ImplDatabaseRemote.PORTS[0]);
-            registry.bind("database", skeleton);
-            System.out.println("serviço de banco de dados rodando em " + ImplDatabaseRemote.PORTS[0]);
+        for (int port : ImplDatabaseRemote.PORTS) {
+            try {
+                final var implDatabaseRemote = new ImplDatabaseRemote();
+                final var skeleton = (DatabaseRemote) UnicastRemoteObject.exportObject(implDatabaseRemote, 0);
+                LocateRegistry.createRegistry(port);
+                final var registry = LocateRegistry.getRegistry(port);
+                registry.bind("database", skeleton);
+                System.out.println("Serviço de banco de dados rodando em " + port);
             
-            
-        } catch (RemoteException | AlreadyBoundException e) {
+            }
+         catch (RemoteException | AlreadyBoundException e) {
             throw new RuntimeException(e);
+        }
         }
     }
 }

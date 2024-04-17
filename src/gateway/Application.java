@@ -21,15 +21,15 @@ public class Application {
             final var authenticationStub = (AuthenticationRemote) registryAuth.lookup("authentication");
             
             var registryDB = LocateRegistry.getRegistry(ImplDatabaseRemote.PORTS[0]);
-            var databaseStub = (DatabaseRemote) registryDB.lookup("database1");
+            var databaseStub = (DatabaseRemote) registryDB.lookup("database");
             databases.add(databaseStub);
             
             registryDB = LocateRegistry.getRegistry(ImplDatabaseRemote.PORTS[1]);
-            databaseStub = (DatabaseRemote) registryDB.lookup("database2");
+            databaseStub = (DatabaseRemote) registryDB.lookup("database");
             databases.add(databaseStub);
 
             registryDB = LocateRegistry.getRegistry(ImplDatabaseRemote.PORTS[2]);
-            databaseStub = (DatabaseRemote) registryDB.lookup("database3");
+            databaseStub = (DatabaseRemote) registryDB.lookup("database");
             databases.add(databaseStub);
 
             final var implGatewayRemote = new ImplGatewayRemote(authenticationStub, databases,true);
