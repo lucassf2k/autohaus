@@ -34,9 +34,15 @@ public class ProxyReverse implements ProxyReverseProtocol {
             if (this.isAllowed(pack.receiver())) {
                 System.out.println("serviço permitido para " + pack.receiver());
                 output = this.toForward(pack.content());
+                return output;
+            } else {
+                System.out.println("serviço NÂO permitido para " + pack.receiver());
+                return output;
             }
+        } else {
+            System.out.println("serviço não permitido para " + pack.sender());
+            return output;
         }
-        return output;
     }
 
     private boolean isAllowed(Integer port) {

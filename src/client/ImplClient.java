@@ -54,7 +54,7 @@ public class ImplClient {
 
     private void exec() {
         try {
-            final var isUserValid = this.login();
+            var isUserValid = this.login();
             this.menu(isUserValid);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
@@ -88,13 +88,16 @@ public class ImplClient {
                     aesKey);
             final var pack = new Package(this.PORT, ImplGatewayRemote.PORT, message);
             final var response = this.proxyReverseStub.execute(pack);
-            if (Objects.isNull(response)) return credentials;
+            if (Objects.isNull(response)) {
+                System.out.println("rejeitando pelo proxy...");
+                continue;
+            };
             final var rawContent = sdcStub.decryptMessage(response.content(), response.VERNAM_KEY(), response.AES_KEY());
             final var checkHmac = sdcStub.checkSignMessage(response.HMAC(), response.RSA_PUBLIC_KEY(), response.RSA_MODULUS());
             final var isAuthentic = this.checkingAuthenticity(response.HMAC_KEY(), response.content(), checkHmac);
             if (!isAuthentic) {
                 System.out.println("autenticidade inválida vindo do gateway");
-                return credentials;
+                continue;
             }
             final var splitRawContent = rawContent.split("-");
             final var isRegistered = splitRawContent[0];
