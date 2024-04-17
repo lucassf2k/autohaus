@@ -30,6 +30,7 @@ import java.util.Scanner;
 public class ImplClient {
     private final ProxyReverseProtocol proxyReverseStub;
     private static final Scanner scan = new Scanner(System.in);
+    
     private final int PORT;
     private final SdcService sdcStub;
     private final BigInteger RSA_PRIVATE_KEY;
@@ -37,7 +38,9 @@ public class ImplClient {
     private final BigInteger RSA_MODULUS;
 
     public ImplClient(final int port) throws RemoteException, NotBoundException {
-        final var registryProxy = LocateRegistry.getRegistry(ProxyReverse.PORT);
+        System.setProperty("java.security.policy", "java.policy");
+        final var registryProxy = LocateRegistry.getRegistry("192.168.0.8", ProxyReverse.PORT);
+        //final var registryProxy = LocateRegistry.getRegistry(ProxyReverse.PORT);
         this.proxyReverseStub = (ProxyReverseProtocol) registryProxy.lookup("proxy");
         final var registrySdc = LocateRegistry.getRegistry(ImplSdcService.PORT);
         this.sdcStub = (SdcService) registrySdc.lookup("sdc");
