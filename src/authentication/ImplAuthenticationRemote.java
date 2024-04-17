@@ -19,6 +19,8 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
     @Override
     public Credentials login(String email, String password) throws RemoteException {
         System.out.println("processando login...");
+        System.out.println(email);
+        System.out.println(password);
         final var user = USERS.stream()
                 .filter(u -> u.email().equals(email) && u.password().equals(password))
                 .findFirst();
@@ -26,5 +28,5 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         else return new Credentials(Boolean.TRUE, user.get().type());
     }
 
-    public record Credentials(Boolean isRegistered, UserTypes useType) implements Serializable {};
+    public record Credentials(boolean isRegistered, UserTypes useType) implements Serializable {};
 }

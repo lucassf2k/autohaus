@@ -6,7 +6,7 @@ import java.rmi.RemoteException;
 public class App1 {
     public static void main(String[] args) {
         try {
-            new ImplClient();
+            new ImplClient(56001);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
