@@ -1,0 +1,11 @@
+A partir do projeto da prática offline 3 da disciplina de sistemas distribuídos, adicionar:
+    ● O serviço de executores para o gerenciamento de threads.
+    ● Lambda e interfaces funcionais com justificativo de uso.
+    ● Desenvolver cenários de simulação para três algoritmos de balanceamento de carga de requisições.
+
+// Tasks
+[] Remover os de redundância do dabatase
+[] Desenvolver 3 algoritmos de balanceamento de carga
+    [] Round Robin
+    []
+[] Analisar e aplicar lambdas em toda a aplicação
