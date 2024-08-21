@@ -20,9 +20,9 @@ public class ImplRoundRobin implements Protocol {
         return this.getCurrent();
     }
 
-    private DatabaseRemote getCurrent() {
-        System.out.println("Server index: " + serverIndex);
+    private DatabaseRemote getCurrent() throws RemoteException {
         final var response = this.dbs.get(serverIndex);
+        System.out.println("Server que ta respondendo: " + response.getPort());
         ImplRoundRobin.serverIndex = (ImplRoundRobin.serverIndex + 1) % this.dbs.size();
         return response;
     }

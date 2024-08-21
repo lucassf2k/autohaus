@@ -10,6 +10,11 @@ import java.util.stream.Collectors;
 public class ImplDatabaseRemote implements DatabaseRemote {
     public final static int[] PORTS = new int[]{20005,20006,20007};
     public static boolean isCoord = true;
+    private int port;
+
+    public ImplDatabaseRemote(final int port) {
+        this.port = port;
+    }
 
     @Override
     public Boolean save(Car input) throws RemoteException {
@@ -77,5 +82,10 @@ public class ImplDatabaseRemote implements DatabaseRemote {
         ALSql.DB.remove(renavam);
         ALSql.DB.put(renavam, car);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public int getPort() throws RemoteException {
+        return this.port;
     }
 }

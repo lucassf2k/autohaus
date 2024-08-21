@@ -9,7 +9,7 @@ public class Application {
     public static void main(String[] args) {
         for (int port : ImplDatabaseRemote.PORTS) {
             try {
-                final var implDatabaseRemote = new ImplDatabaseRemote();
+                final var implDatabaseRemote = new ImplDatabaseRemote(port);
                 final var skeleton = (DatabaseRemote) UnicastRemoteObject.exportObject(implDatabaseRemote, 0);
                 LocateRegistry.createRegistry(port);
                 final var registry = LocateRegistry.getRegistry(port);

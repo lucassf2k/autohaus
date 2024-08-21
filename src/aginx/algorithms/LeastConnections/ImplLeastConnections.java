@@ -21,7 +21,7 @@ public class ImplLeastConnections implements Protocol {
         return this.getCurrent();
     }
 
-    private DatabaseRemote getCurrent() {
+    private DatabaseRemote getCurrent() throws RemoteException {
         System.out.println("R" + requestNumber);
         requestNumber++;
         System.out.println("Número da menor conexão ativa: " + roundConnectionNumber);
@@ -31,7 +31,7 @@ public class ImplLeastConnections implements Protocol {
             System.out.println();
             if (db.getValue().equals(roundConnectionNumber)) {
                 response = db.getKey();
-                System.out.println("Número de conexão do servidor que tá respondendo: " + db.getValue());
+                System.out.println("Servidor que ta respondendo: " + db.getKey().getPort());
                 db.setValue(db.getValue() + 1);
                 countOfRound++;
                 break;
