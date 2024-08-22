@@ -22,6 +22,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class ImplGatewayRemote implements GatewayRemote {
     private DatabaseRemote databasesReplicas[];
@@ -30,8 +32,8 @@ public class ImplGatewayRemote implements GatewayRemote {
     public static final int PORT = 20010;
     private final AuthenticationRemote authenticationStub;
 
-    private List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
-    private Protocol databaseStub;
+    //private final List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
+    private final Protocol databaseStub;
 
     private final BigInteger RSA_PUBLIC_KEY;
     private final BigInteger RSA_PRIVATE_KEY;
@@ -63,16 +65,6 @@ public class ImplGatewayRemote implements GatewayRemote {
         final var newCar = new Car(renavam, name, category, yearManufacture, price);
         final var db = databaseStub.execute();
         db.save(newCar);
-//        if(isLeader){
-//        for(int i = 0;i< carDatabaseStub.size(); i++){
-//                if(carDatabaseStub.get(i) != this){
-//                    carDatabaseStub.get(i).save(newCar);
-//                }else{
-//                    carDatabaseStub.get(i).save(newCar);
-//                }
-//            }
-//        }
-//        nextReplica();
         return true;
     }
 
@@ -145,22 +137,10 @@ public class ImplGatewayRemote implements GatewayRemote {
 
     @Override
     public List<Car> getCarOfCategory(int category) throws RemoteException {
-        CarCategories carCategory = null;
-        if (category == 0) {
-            carCategory = CarCategories.ECONOMIC;
-        }
-        if (category == 1) {
-            carCategory = CarCategories.INTERMEDIATE;
-        }
-        if (category == 2) {
-            carCategory = CarCategories.EXECUTIVE;
-        }
+        final var carCategory = CarCategories.parseToCarCategory(category);
         System.out.println("enviando ao serviço de banco de dados...");
         final var db = databaseStub.execute();
         return db.getOfCategory(carCategory);
-//        final var replica = getReplica();
-//        System.out.println("Replica: "+ replica);
-//        return carDatabaseStub.get(replica).getOfCategory(carCategory);
     }
 
     @Override
@@ -169,52 +149,17 @@ public class ImplGatewayRemote implements GatewayRemote {
         System.out.println("enviando ao serviço de banco de dados...");
         final var db = databaseStub.execute();
         return db.update(renavam, updatedCar);
-//        if(isLeader){
-//            for (int i = 0; i < carDatabaseStub.size(); i++) {
-//                if (carDatabaseStub.get(i) != this) {
-//                    carDatabaseStub.get(i).update(renavam, updatedCar);
-//                    System.out.println("Atualizado na réplica " + i);
-//                }
-//                else{
-//                    carDatabaseStub.get(i).update(renavam,updatedCar);
-//                }
-//            }
-//        }
-//        final var replica = getReplica();
-//        System.out.println("Replica: " + replica);
-//        nextReplica();
-//        return true;
     }
 
     @Override
     public Car buyCar(String renavam, double price) throws RemoteException {
         final var db = databaseStub.execute();
         final var carToBuy = db.get(renavam);
-        if (!carToBuy.getPrice().equals(price)) return null;
+        Function<Car, Boolean> canPurchased = (c) -> c.getPrice().equals(price);
+        if (!canPurchased.apply(carToBuy)) return null;
         System.out.println("enviando ao serviço de banco de dados...");
         deleteCar(renavam);
         return carToBuy;
-//        if(isLeader){
-//            for(int i = 0;i< carDatabaseStub.size(); i++){
-//                    if(carDatabaseStub.get(i) != this){
-//                        carDatabaseStub.get(i).list();
-//                    }
-//                }
-//            }
-//            final var replica = getReplica();
-//        System.out.println("Replica: "+ replica);
-//            nextReplica();
-//        return carToBuy;
-    }
-
-
-    private void nextReplica(){
-        currentReplica = (currentReplica + 1) % carDatabaseStub.size();
-        System.out.println(currentReplica);
-    }
-
-    private int getReplica(){
-        return currentReplica;
     }
   
     @Override
@@ -271,17 +216,18 @@ public class ImplGatewayRemote implements GatewayRemote {
                 final var registerFields = rawMessage.split("-");
                 final var renavam = registerFields[0];
                 final var name = registerFields[1];
-                CarCategories category = null;
                 final var categoryNumber = registerFields[2];
-                if (Integer.parseInt(categoryNumber) == 0) {
-                    category = CarCategories.ECONOMIC;
-                }
-                if (Integer.parseInt(categoryNumber) == 1) {
-                    category = CarCategories.INTERMEDIATE;
-                }
-                if (Integer.parseInt(categoryNumber) == 2) {
-                    category = CarCategories.EXECUTIVE;
-                }
+                final var category = CarCategories
+                        .parseToCarCategory(Integer.parseInt(categoryNumber));
+//                if (Integer.parseInt(categoryNumber) == 0) {
+//                    category = CarCategories.ECONOMIC;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 1) {
+//                    category = CarCategories.INTERMEDIATE;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 2) {
+//                    category = CarCategories.EXECUTIVE;
+//                }
                 final var yearManufacture = registerFields[3];
                 final var price = registerFields[4];
                 final var success = this.createCar(renavam, name, category, yearManufacture, Double.parseDouble(price));
@@ -301,17 +247,18 @@ public class ImplGatewayRemote implements GatewayRemote {
                 final var updateFields = rawMessage.split("-");
                 final var renavam = updateFields[0];
                 final var name = updateFields[1];
-                CarCategories category = null;
                 final var categoryNumber = updateFields[2];
-                if (Integer.parseInt(categoryNumber) == 0) {
-                    category = CarCategories.ECONOMIC;
-                }
-                if (Integer.parseInt(categoryNumber) == 1) {
-                    category = CarCategories.INTERMEDIATE;
-                }
-                if (Integer.parseInt(categoryNumber) == 2) {
-                    category = CarCategories.EXECUTIVE;
-                }
+                final var category = CarCategories
+                        .parseToCarCategory(Integer.parseInt(categoryNumber));
+//                if (Integer.parseInt(categoryNumber) == 0) {
+//                    category = CarCategories.ECONOMIC;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 1) {
+//                    category = CarCategories.INTERMEDIATE;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 2) {
+//                    category = CarCategories.EXECUTIVE;
+//                }
                 final var yearManufacture = updateFields[3];
                 final var price = updateFields[4];
                 final var success = this.updateCar(renavam, name, category, yearManufacture, Double.parseDouble(price));

@@ -5,6 +5,7 @@ import crypto.PBKDF2Password;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class ImplAuthenticationRemote implements AuthenticationRemote {
     public final static int PORT = 20004;
@@ -45,7 +46,8 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
         final var user = this.get(email);
         if (user != null) {
             final var comparePassword = PBKDF2Password.create(password, user.salt());
-            if (comparePassword[1].equals(user.password())) {
+            IsValidPassword isValidPassword = () -> comparePassword[1].equals(user.password());
+            if (isValidPassword.verify()) {
 //                attempts(email);
                 return new Credentials(Boolean.TRUE, user.type());
             } else {
@@ -60,9 +62,10 @@ public class ImplAuthenticationRemote implements AuthenticationRemote {
     @Override
     public User get(String email) throws RemoteException {
         System.out.println("buscando usuário...");
+        final Predicate<User> filterByEmail = (u) -> u.email().equals(email);
         final var user = USERS
                 .stream()
-                .filter(u -> u.email().equals(email))
+                .filter(filterByEmail)
                 .findFirst();
         return user.orElse(null);
     }

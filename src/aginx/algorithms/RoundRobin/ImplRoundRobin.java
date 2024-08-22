@@ -9,6 +9,7 @@ import java.util.List;
 public class ImplRoundRobin implements Protocol {
     public static int PORT = 6000;
     private static int serverIndex = 0;
+    private int countOfRequest = 0;
     private final List<DatabaseRemote> dbs;
 
     public ImplRoundRobin(List<DatabaseRemote> dbs) {
@@ -21,6 +22,7 @@ public class ImplRoundRobin implements Protocol {
     }
 
     private DatabaseRemote getCurrent() throws RemoteException {
+        System.out.println("R" + countOfRequest++);
         final var response = this.dbs.get(serverIndex);
         System.out.println("Server que ta respondendo: " + response.getPort());
         ImplRoundRobin.serverIndex = (ImplRoundRobin.serverIndex + 1) % this.dbs.size();

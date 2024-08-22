@@ -1,6 +1,6 @@
-package aginx.algorithms;
+package aginx.algorithms.RoundRobin;
 
-import aginx.algorithms.RoundRobin.ImplRoundRobin;
+import aginx.algorithms.Protocol;
 import database.DatabaseRemote;
 import database.ImplDatabaseRemote;
 import java.rmi.AlreadyBoundException;

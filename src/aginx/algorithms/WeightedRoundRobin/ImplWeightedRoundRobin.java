@@ -23,30 +23,26 @@ public class ImplWeightedRoundRobin implements Protocol {
     private DatabaseRemote getCurrent() throws RemoteException {
         System.out.println("Request " + requestNumber);
         requestNumber++;
-
         // Total weight of all servers
-        int totalWeight = this.dbs.values().stream().reduce(0, Integer::sum);
-
+        final int totalWeight = this.dbs
+                .values()
+                .stream()
+                .reduce(0, Integer::sum);
         // Increment current weight
         currentWeight = (currentWeight + 1) % totalWeight;
-
         int weightSum = 0;
-        DatabaseRemote selectedDatabase = null;
-
+        DatabaseRemote response = null;
         for (final var db : this.dbs.entrySet()) {
             weightSum += db.getValue();
-
             if (currentWeight < weightSum) {
-                selectedDatabase = db.getKey();
+                response = db.getKey();
                 System.out.println("Servidor: " + db.getKey().getPort());
                 break;
             }
         }
-
-        if (selectedDatabase != null) {
-            return selectedDatabase;
+        if (response != null) {
+            return response;
         }
-
         // Fallback if no server is found (shouldn't happen with valid weights)
         throw new RemoteException("No server selected, check the configuration.");
     }
