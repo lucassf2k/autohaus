@@ -1,19 +1,16 @@
 package gateway;
 
+import aginx.algorithms.Protocol;
 import authentication.AuthenticationRemote;
 import authentication.ImplAuthenticationRemote;
-import authentication.User;
-import authentication.UserTypes;
 import crypto.HMAC;
 import database.DatabaseRemote;
-import jdk.jfr.Category;
 import sdc.ImplSdcService;
 import sdc.SdcService;
 import shared.Car;
 import shared.CarCategories;
 import shared.Message;
 
-import javax.security.auth.login.CredentialNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.rmi.NotBoundException;
@@ -25,6 +22,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class ImplGatewayRemote implements GatewayRemote {
     private DatabaseRemote databasesReplicas[];
@@ -33,16 +32,18 @@ public class ImplGatewayRemote implements GatewayRemote {
     public static final int PORT = 20010;
     private final AuthenticationRemote authenticationStub;
 
-    private List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
+    //private final List<DatabaseRemote> carDatabaseStub = new ArrayList<>();
+    private final Protocol databaseStub;
 
     private final BigInteger RSA_PUBLIC_KEY;
     private final BigInteger RSA_PRIVATE_KEY;
     private final BigInteger RSA_MODULUS;
     private final SdcService sdcStub;
 
-    public ImplGatewayRemote(AuthenticationRemote authenticationStub, List<DatabaseRemote> carDatabaseStub, Boolean isLeader) throws RemoteException, NotBoundException {
+    public ImplGatewayRemote(AuthenticationRemote authenticationStub, Protocol carDatabaseStub, Boolean isLeader) throws RemoteException, NotBoundException {
         this.authenticationStub = authenticationStub;
-        this.carDatabaseStub = carDatabaseStub;
+        //this.carDatabaseStub = carDatabaseStub;
+        databaseStub = carDatabaseStub;
         this.isLeader = isLeader;
         final var registrySDC = LocateRegistry.getRegistry(ImplSdcService.PORT);
         sdcStub = (SdcService) registrySDC.lookup("sdc");
@@ -62,144 +63,103 @@ public class ImplGatewayRemote implements GatewayRemote {
     public Boolean createCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
         final var newCar = new Car(renavam, name, category, yearManufacture, price);
-        if(isLeader){
-        for(int i = 0;i< carDatabaseStub.size(); i++){
-                if(carDatabaseStub.get(i) != this){
-                    carDatabaseStub.get(i).save(newCar);
-                }else{
-                    carDatabaseStub.get(i).save(newCar);
-                }
-            }
-        }
-        nextReplica();
+        final var db = databaseStub.execute();
+        db.save(newCar);
         return true;
     }
 
     @Override
     public List<Car> list() throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        final var replica = getReplica();
-        System.out.println("Replica: " + replica);
-        List<Car> listinha = new ArrayList<Car>();
-        if (isLeader) {
-            for (int i = 0; i < carDatabaseStub.size(); i++) {
-                if (carDatabaseStub.get(i) != this) {
-                    listinha = carDatabaseStub.get(i).list();
-                }
-        }  
+        final var db = databaseStub.execute();
+        return db.list();
+//        final var replica = getReplica();
+//        System.out.println("Replica: " + replica);
+//        List<Car> listinha = new ArrayList<Car>();
+//        if (isLeader) {
+//            for (int i = 0; i < carDatabaseStub.size(); i++) {
+//                if (carDatabaseStub.get(i) != this) {
+//                    listinha = carDatabaseStub.get(i).list();
+//                }
+//            }
+//        }
+//        return listinha;
     }
-    return listinha;
-}
 
     @Override
     public Boolean deleteCar(String renanam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        if(isLeader){
-            
-            for (int i = 0; i < carDatabaseStub.size(); i++) {
-                if (carDatabaseStub.get(i) != this) {
-                    carDatabaseStub.get(i).delele(renanam);
-                    System.out.println("Atualizado na réplica " + i);
-                }
-                else{
-                    carDatabaseStub.get(i).delele(renanam);
-                }
-            }
-        }
-        nextReplica();
-        return true;
+        final var db = databaseStub.execute();
+        return db.delele(renanam);
+//        if(isLeader){
+//
+//            for (int i = 0; i < carDatabaseStub.size(); i++) {
+//                if (carDatabaseStub.get(i) != this) {
+//                    carDatabaseStub.get(i).delele(renanam);
+//                    System.out.println("Atualizado na réplica " + i);
+//                }
+//                else{
+//                    carDatabaseStub.get(i).delele(renanam);
+//                }
+//            }
+//        }
+//        nextReplica();
+//        return true;
     }
 
     @Override
     public Car getCar(String renavam) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        final var replica = getReplica();
-        System.out.println("Replica: " + replica);
-        Car carro = new Car(renavam, renavam, null, renavam, null);
-        if(isLeader){
-            for (int i = 0; i < carDatabaseStub.size(); i++) {
-                if (carDatabaseStub.get(i) != this) {
-                    carro = carDatabaseStub.get(i).get(renavam);
-                }
-            }
-        }
-        return carro;
+        final var db = databaseStub.execute();
+        return db.get(renavam);
+//        final var replica = getReplica();
+//        System.out.println("Replica: " + replica);
+//        Car carro = new Car(renavam, renavam, null, renavam, null);
+//        if(isLeader){
+//            for (int i = 0; i < carDatabaseStub.size(); i++) {
+//                if (carDatabaseStub.get(i) != this) {
+//                    carro = carDatabaseStub.get(i).get(renavam);
+//                }
+//            }
+//        }
+//        return carro;
     }
 
     @Override
     public List<Car> getCarOfName(String name) throws RemoteException {
         System.out.println("enviando ao serviço de banco de dados...");
-        final var replica  = getReplica();
-        System.out.println("Replica: " + replica);
-        return carDatabaseStub.get(replica).getOfName(name);
+        final var db = databaseStub.execute();
+        return db.getOfName(name);
+//        final var replica  = getReplica();
+//        System.out.println("Replica: " + replica);
+//        return carDatabaseStub.get(replica).getOfName(name);
     }
 
     @Override
     public List<Car> getCarOfCategory(int category) throws RemoteException {
-        CarCategories carCategory = null;
-        if (category == 0) {
-            carCategory = CarCategories.ECONOMIC;
-        }
-        if (category == 1) {
-            carCategory = CarCategories.INTERMEDIATE;
-        }
-        if (category == 2) {
-            carCategory = CarCategories.EXECUTIVE;
-        }
+        final var carCategory = CarCategories.parseToCarCategory(category);
         System.out.println("enviando ao serviço de banco de dados...");
-        final var replica = getReplica();
-        System.out.println("Replica: "+ replica);
-        return carDatabaseStub.get(replica).getOfCategory(carCategory);
+        final var db = databaseStub.execute();
+        return db.getOfCategory(carCategory);
     }
 
     @Override
     public Boolean updateCar(String renavam, String name, CarCategories category, String yearManufacture, Double price) throws RemoteException {
         final var updatedCar = new Car(renavam, name, category, yearManufacture, price);
         System.out.println("enviando ao serviço de banco de dados...");
-        if(isLeader){
-            for (int i = 0; i < carDatabaseStub.size(); i++) {
-                if (carDatabaseStub.get(i) != this) {
-                    carDatabaseStub.get(i).update(renavam, updatedCar);
-                    System.out.println("Atualizado na réplica " + i);
-                }
-                else{
-                    carDatabaseStub.get(i).update(renavam,updatedCar);
-                }
-            }
-        }
-        final var replica = getReplica();
-        System.out.println("Replica: " + replica);
-        nextReplica();
-        return true;
+        final var db = databaseStub.execute();
+        return db.update(renavam, updatedCar);
     }
 
     @Override
     public Car buyCar(String renavam, double price) throws RemoteException {
-        final var carToBuy = getCar(renavam);
-        if (!carToBuy.getPrice().equals(price)) return null;
+        final var db = databaseStub.execute();
+        final var carToBuy = db.get(renavam);
+        Function<Car, Boolean> canPurchased = (c) -> c.getPrice().equals(price);
+        if (!canPurchased.apply(carToBuy)) return null;
         System.out.println("enviando ao serviço de banco de dados...");
         deleteCar(renavam);
-        if(isLeader){
-            for(int i = 0;i< carDatabaseStub.size(); i++){
-                    if(carDatabaseStub.get(i) != this){
-                        carDatabaseStub.get(i).list();
-                    }
-                }
-            }
-            final var replica = getReplica();
-        System.out.println("Replica: "+ replica);
-            nextReplica();
         return carToBuy;
-    }
-
-
-    private void nextReplica(){
-        currentReplica = (currentReplica + 1) % carDatabaseStub.size();
-        System.out.println(currentReplica);
-    }
-
-    private int getReplica(){
-        return currentReplica;
     }
   
     @Override
@@ -256,17 +216,18 @@ public class ImplGatewayRemote implements GatewayRemote {
                 final var registerFields = rawMessage.split("-");
                 final var renavam = registerFields[0];
                 final var name = registerFields[1];
-                CarCategories category = null;
                 final var categoryNumber = registerFields[2];
-                if (Integer.parseInt(categoryNumber) == 0) {
-                    category = CarCategories.ECONOMIC;
-                }
-                if (Integer.parseInt(categoryNumber) == 1) {
-                    category = CarCategories.INTERMEDIATE;
-                }
-                if (Integer.parseInt(categoryNumber) == 2) {
-                    category = CarCategories.EXECUTIVE;
-                }
+                final var category = CarCategories
+                        .parseToCarCategory(Integer.parseInt(categoryNumber));
+//                if (Integer.parseInt(categoryNumber) == 0) {
+//                    category = CarCategories.ECONOMIC;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 1) {
+//                    category = CarCategories.INTERMEDIATE;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 2) {
+//                    category = CarCategories.EXECUTIVE;
+//                }
                 final var yearManufacture = registerFields[3];
                 final var price = registerFields[4];
                 final var success = this.createCar(renavam, name, category, yearManufacture, Double.parseDouble(price));
@@ -286,17 +247,18 @@ public class ImplGatewayRemote implements GatewayRemote {
                 final var updateFields = rawMessage.split("-");
                 final var renavam = updateFields[0];
                 final var name = updateFields[1];
-                CarCategories category = null;
                 final var categoryNumber = updateFields[2];
-                if (Integer.parseInt(categoryNumber) == 0) {
-                    category = CarCategories.ECONOMIC;
-                }
-                if (Integer.parseInt(categoryNumber) == 1) {
-                    category = CarCategories.INTERMEDIATE;
-                }
-                if (Integer.parseInt(categoryNumber) == 2) {
-                    category = CarCategories.EXECUTIVE;
-                }
+                final var category = CarCategories
+                        .parseToCarCategory(Integer.parseInt(categoryNumber));
+//                if (Integer.parseInt(categoryNumber) == 0) {
+//                    category = CarCategories.ECONOMIC;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 1) {
+//                    category = CarCategories.INTERMEDIATE;
+//                }
+//                if (Integer.parseInt(categoryNumber) == 2) {
+//                    category = CarCategories.EXECUTIVE;
+//                }
                 final var yearManufacture = updateFields[3];
                 final var price = updateFields[4];
                 final var success = this.updateCar(renavam, name, category, yearManufacture, Double.parseDouble(price));

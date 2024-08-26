@@ -38,11 +38,11 @@ public class ImplClient {
     private final BigInteger RSA_MODULUS;
 
     public ImplClient(final int port) throws RemoteException, NotBoundException {
-        System.setProperty("java.security.policy", "java.policy");
-        final var registryProxy = LocateRegistry.getRegistry("10.215.6.253", ProxyReverse.PORT);
+        //System.setProperty("java.security.policy", "java.policy");
+        final var registryProxy = LocateRegistry.getRegistry(ProxyReverse.PORT);
         //final var registryProxy = LocateRegistry.getRegistry(ProxyReverse.PORT);
         this.proxyReverseStub = (ProxyReverseProtocol) registryProxy.lookup("proxy");
-        final var registrySdc = LocateRegistry.getRegistry("10.215.6.253", ImplSdcService.PORT);
+        final var registrySdc = LocateRegistry.getRegistry(ImplSdcService.PORT);
         this.sdcStub = (SdcService) registrySdc.lookup("sdc");
         final var rsaKeys = sdcStub.getRSAKeys();
         RSA_PRIVATE_KEY = rsaKeys.privateKey();

@@ -15,4 +15,5 @@ public interface DatabaseRemote extends Remote {
     List<Car> getOfName(String name) throws RemoteException;
     List<Car> getOfCategory(CarCategories category) throws RemoteException;
     Boolean update(String renavam, Car updatedCar) throws RemoteException;
+    int getPort() throws RemoteException;
 }
